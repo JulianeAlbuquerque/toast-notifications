@@ -1,8 +1,9 @@
-import FlashMessagesContext from "./FlashMessagesContext";
 import PropTypes from "prop-types";
-import React, { Component, useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
-const FlashMessagesProvider = ({ children }) => {
+import FlashNotificationsContext from "./FlashNotificationsContext";
+
+const FlashNotificationsProvider = ({ children }) => {
   const [isOnStackLimit, setIsOnStackLimit] = useState(false);
   const [primaryQueue, setPrimaryQueue] = useState([]);
   const [secondaryQueue, setSecondaryQueue] = useState([]);
@@ -21,29 +22,15 @@ const FlashMessagesProvider = ({ children }) => {
     [removeMessageById]
   );
 
-  const setStateToArray = (prop, newValue) => (state) => {
-    const previousState = state[prop];
-    const newState = [...previousState, newValue];
-
-    return {
-      [prop]: newState
-    };
-  };
-
   const enqueue = useCallback(
-    (props) => {
-      if (!props) return;
+    (Component) => {
+      if (!Component) return;
+
+      // if (!React.isValidElement(props.children)) return;
 
       const messageId = Math.floor(Math.random() * Math.floor(9999999));
 
-      if (typeof props === "function") {
-        const onDismiss = () => this.removeMessageById(messageId);
-        props = props({ onDismiss });
-      }
-
-      if (!React.isValidElement(props.children)) return;
-
-      const messageProps = { ...props, id: messageId };
+      const messageProps = { el: Component, id: messageId };
 
       if (isOnStackLimit) {
         setSecondaryQueue([...secondaryQueue, messageProps]);
@@ -61,10 +48,6 @@ const FlashMessagesProvider = ({ children }) => {
   );
 
   useEffect(() => {
-    window.events.on("triggerFlashMessage", enqueue);
-  }, [enqueue]);
-
-  useEffect(() => {
     if (isOnStackLimit && primaryQueue.length < 4 && secondaryQueue.length) {
       let messageId;
       const lastMessageFromQueue = secondaryQueue.shift();
@@ -78,22 +61,22 @@ const FlashMessagesProvider = ({ children }) => {
   }, [isOnStackLimit, primaryQueue, secondaryQueue, setTimerForMessage]);
 
   return (
-    <FlashMessagesContext.Provider
+    <FlashNotificationsContext.Provider
       value={{
         messages: primaryQueue,
         trigger: enqueue
       }}
     >
       {children}
-    </FlashMessagesContext.Provider>
+    </FlashNotificationsContext.Provider>
   );
 };
 
-FlashMessagesProvider.propTypes = {
+FlashNotificationsProvider.propTypes = {
   children: PropTypes.oneOfType([
     PropTypes.arrayOf(PropTypes.node),
     PropTypes.node
   ]).isRequired
 };
 
-export default FlashMessagesProvider;
+export default FlashNotificationsProvider;

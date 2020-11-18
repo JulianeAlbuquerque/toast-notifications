@@ -1,4 +1,4 @@
-import FlashMessagesContext from "./FlashMessagesContext";
+import FlashNotificationsContext from "./FlashNotificationsContext";
 import PropTypes from "prop-types";
 import React, { Component } from "react";
 
@@ -11,10 +11,6 @@ class FlashMessagesProvider extends Component {
       primaryQueue: [],
       secondaryQueue: []
     };
-  }
-
-  componentDidMount() {
-    window.events.on("triggerFlashMessage", this.enqueue);
   }
 
   componentDidUpdate() {
@@ -51,7 +47,7 @@ class FlashMessagesProvider extends Component {
     const { primaryQueue } = this.state;
 
     return (
-      <FlashMessagesContext.Provider
+      <FlashNotificationsContext.Provider
         value={{
           messages: primaryQueue,
           dismissMessage: this.removeMessageById,
@@ -59,7 +55,7 @@ class FlashMessagesProvider extends Component {
         }}
       >
         {children}
-      </FlashMessagesContext.Provider>
+      </FlashNotificationsContext.Provider>
     );
   }
 
@@ -84,19 +80,19 @@ class FlashMessagesProvider extends Component {
     };
   };
 
-  enqueue = (props) => {
-    if (!props) return;
+  enqueue = (Component) => {
+    if (!Component) return;
 
     const messageId = Math.floor(Math.random() * Math.floor(9999999));
 
-    if (typeof props === "function") {
+    /*if (typeof props === "function") {
       const onDismiss = () => this.removeMessageById(messageId);
       props = props({ onDismiss });
-    }
+    }*/
 
-    if (!React.isValidElement(props.children)) return;
+    //if (!React.isValidElement(props.children)) return;
 
-    const messageProps = { ...props, id: messageId };
+    const messageProps = { el: Component, id: messageId };
 
     if (this.state.isOnStackLimit) {
       this.setState(this.setStateToArray("secondaryQueue", messageProps));
